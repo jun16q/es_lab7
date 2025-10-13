@@ -38,7 +38,12 @@ Core/Src/stm32l4xx_hal_msp.o: ../Core/Src/stm32l4xx_hal_msp.c \
  ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2_bus.h \
  ../Core/Inc/b_l475e_iot01a2_conf.h \
  ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2_errno.h \
- ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h
+ ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/stm32l475e_iot01_accelero.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/lsm6dsl.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/accelero.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/gyro.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -80,3 +85,8 @@ Core/Src/stm32l4xx_hal_msp.o: ../Core/Src/stm32l4xx_hal_msp.c \
 ../Core/Inc/b_l475e_iot01a2_conf.h:
 ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2_errno.h:
 ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h:
+../Drivers/BSP/B-L475E-IOT01A2/stm32l475e_iot01_accelero.h:
+../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/lsm6dsl.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/accelero.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/gyro.h:

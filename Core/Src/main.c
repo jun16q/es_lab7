@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,7 +89,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  BSP_ACCELERO_Init();
+  int16_t pDataXYZ[3] = {0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -102,7 +103,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DFSDM1_Init();
-  MX_I2C2_Init();
+//  MX_I2C2_Init();
   MX_QUADSPI_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
@@ -115,9 +116,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
     /* USER CODE END WHILE */
-
-  MX_BlueNRG_MS_Process();
+	MX_BlueNRG_MS_Process();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

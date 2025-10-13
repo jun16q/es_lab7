@@ -55,6 +55,11 @@ BlueNRG_MS/App/app_bluenrg_ms.o: ../BlueNRG_MS/App/app_bluenrg_ms.c \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_utils.h \
  ../Middlewares/ST/BlueNRG-MS/includes/compiler.h \
  ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h ../Core/Inc/main.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/stm32l475e_iot01_accelero.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/lsm6dsl.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/accelero.h \
+ ../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/gyro.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap_aci.h \
  ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h \
@@ -119,6 +124,11 @@ BlueNRG_MS/App/app_bluenrg_ms.o: ../BlueNRG_MS/App/app_bluenrg_ms.c \
 ../Middlewares/ST/BlueNRG-MS/includes/compiler.h:
 ../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h:
 ../Core/Inc/main.h:
+../Drivers/BSP/B-L475E-IOT01A2/stm32l475e_iot01_accelero.h:
+../Drivers/BSP/B-L475E-IOT01A2/b_l475e_iot01a2.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/lsm6dsl.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/accelero.h:
+../Drivers/BSP/B-L475E-IOT01A2/../Components/lsm6dsl/../Common/gyro.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gap_aci.h:
 ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_gatt_aci.h:
