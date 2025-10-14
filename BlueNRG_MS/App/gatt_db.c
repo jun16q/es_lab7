@@ -209,27 +209,28 @@ fail:
  * @param  AxesRaw_t structure containing acceleration value in mg.
  * @retval tBleStatus Status
  */
-tBleStatus Acc_Update(AxesRaw_t *x_axes, AxesRaw_t *g_axes, AxesRaw_t *m_axes)
+tBleStatus Acc_Update(AxesRaw_t *x_axes /*, AxesRaw_t *g_axes, AxesRaw_t *m_axes*/ )
 {
-  uint8_t buff[2+2*3*3];
+  uint8_t buff[2*3]; //only acc
+//  uint8_t buff[2+2*3*3];
   tBleStatus ret;
 
-  HOST_TO_LE_16(buff,(HAL_GetTick()>>3));
+//  HOST_TO_LE_16(buff,(HAL_GetTick()>>3));
 
-  HOST_TO_LE_16(buff+2,-x_axes->AXIS_Y);
-  HOST_TO_LE_16(buff+4, x_axes->AXIS_X);
-  HOST_TO_LE_16(buff+6,-x_axes->AXIS_Z);
+  HOST_TO_LE_16(buff,-x_axes->AXIS_Y);
+  HOST_TO_LE_16(buff+2, x_axes->AXIS_X);
+  HOST_TO_LE_16(buff+4,-x_axes->AXIS_Z);
 
-  HOST_TO_LE_16(buff+8,g_axes->AXIS_Y);
-  HOST_TO_LE_16(buff+10,g_axes->AXIS_X);
-  HOST_TO_LE_16(buff+12,g_axes->AXIS_Z);
+//  HOST_TO_LE_16(buff+8,g_axes->AXIS_Y);
+//  HOST_TO_LE_16(buff+10,g_axes->AXIS_X);
+//  HOST_TO_LE_16(buff+12,g_axes->AXIS_Z);
+//
+//  HOST_TO_LE_16(buff+14,m_axes->AXIS_Y);
+//  HOST_TO_LE_16(buff+16,m_axes->AXIS_X);
+//  HOST_TO_LE_16(buff+18,m_axes->AXIS_Z);
 
-  HOST_TO_LE_16(buff+14,m_axes->AXIS_Y);
-  HOST_TO_LE_16(buff+16,m_axes->AXIS_X);
-  HOST_TO_LE_16(buff+18,m_axes->AXIS_Z);
-
-  ret = aci_gatt_update_char_value(HWServW2STHandle, AccGyroMagCharHandle,
-				   0, 2+2*3*3, buff);
+  ret = aci_gatt_update_char_value(AccServHandle, AccValueHandle,
+				   0, 2*3, buff);
   if (ret != BLE_STATUS_SUCCESS){
     PRINTF("Error while updating Acceleration characteristic: 0x%02X\n",ret) ;
     return BLE_STATUS_ERROR ;
@@ -298,17 +299,17 @@ void Read_Request_CB(uint16_t handle)
 {
   tBleStatus ret;
 
-  if(handle == AccGyroMagCharHandle + 1)
+  if(handle == AccValueHandle + 1)
   {
-    Acc_Update(&x_axes, &g_axes, &m_axes);
+    Acc_Update(&x_axes/*, &g_axes, &m_axes*/);
   }
-  else if (handle == EnvironmentalCharHandle + 1)
-  {
-    float data_t, data_p;
-    data_t = 27.0 + ((uint64_t)rand()*5)/RAND_MAX; //T sensor emulation
-    data_p = 1000.0 + ((uint64_t)rand()*100)/RAND_MAX; //P sensor emulation
-    BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
-  }
+//  else if (handle == EnvironmentalCharHandle + 1)
+//  {
+//    float data_t, data_p;
+//    data_t = 27.0 + ((uint64_t)rand()*5)/RAND_MAX; //T sensor emulation
+//    data_p = 1000.0 + ((uint64_t)rand()*100)/RAND_MAX; //P sensor emulation
+//    BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
+//  }
 
   if(connection_handle !=0)
   {

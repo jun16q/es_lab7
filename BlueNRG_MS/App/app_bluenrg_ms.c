@@ -188,9 +188,9 @@ void MX_BlueNRG_MS_Init(void)
 
   ret = Add_Acc_Service();
   if(ret == BLE_STATUS_SUCCESS) {
-	PRINTF("BlueMS HW service added successfully.\n");
+	PRINTF("BlueMS Acc service added successfully.\n");
   } else {
-    PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
+    PRINTF("Error while adding BlueMS Acc service: 0x%02x\r\n", ret);
     while(1);
   }
 
@@ -258,8 +258,8 @@ static void User_Init(void)
  */
 static void User_Process(void)
 {
-  float data_t;
-  float data_p;
+//  float data_t;
+//  float data_p;
   static uint32_t counter = 0;
 
   if (set_connectable)
@@ -286,22 +286,32 @@ static void User_Process(void)
     if (connected)
     {
       /* Set a random seed */
-      srand(HAL_GetTick());
+//      srand(HAL_GetTick());
 
-      /* Update emulated Environmental data */
-      Set_Random_Environmental_Values(&data_t, &data_p);
-      BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
+//      /* Update emulated Environmental data */
+//      Set_Random_Environmental_Values(&data_t, &data_p);
+//      BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
 
       /* Update emulated Acceleration, Gyroscope and Sensor Fusion data */
-      Set_Random_Motion_Values(counter);
-      Acc_Update(&x_axes, &g_axes, &m_axes);
-      Quat_Update(&q_axes);
+//      Set_Random_Motion_Values(counter);
 
-      counter ++;
-      if (counter == 40) {
-        counter = 0;
-        Reset_Motion_Values();
-      }
+      /*******************/
+      int16_t pDataAcc[3] = {0,0,0};
+      BSP_ACCELERO_AccGetXYZ(pDataAcc);
+      x_axes.AXIS_X = pDataAcc[0];
+      x_axes.AXIS_Y = pDataAcc[1];
+      x_axes.AXIS_Z = pDataAcc[2];
+      Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+      /*******************/
+
+
+//      Quat_Update(&q_axes);
+//
+//      counter ++;
+//      if (counter == 40) {
+//        counter = 0;
+//        Reset_Motion_Values();
+//      }
 #if !USE_BUTTON
       HAL_Delay(1000); /* wait 1 sec before sending new data */
 #endif
@@ -337,16 +347,16 @@ static void Set_Random_Motion_Values(uint32_t cnt)
     x_axes.AXIS_X +=  (10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
     x_axes.AXIS_Y += -(10  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
     x_axes.AXIS_Z +=  (10  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-    g_axes.AXIS_X +=  (100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
-    g_axes.AXIS_Y += -(100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-    g_axes.AXIS_Z +=  (100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
-    m_axes.AXIS_X +=  (3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    m_axes.AXIS_Y += -(3  + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-    m_axes.AXIS_Z +=  (3  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-
-    q_axes.AXIS_X -= (100  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-    q_axes.AXIS_Y += (100  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-    q_axes.AXIS_Z -= (100  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
+//    g_axes.AXIS_X +=  (100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
+//    g_axes.AXIS_Y += -(100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
+//    g_axes.AXIS_Z +=  (100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
+//    m_axes.AXIS_X +=  (3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
+//    m_axes.AXIS_Y += -(3  + ((uint64_t)rand()*4*cnt)/RAND_MAX);
+//    m_axes.AXIS_Z +=  (3  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
+//
+//    q_axes.AXIS_X -= (100  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
+//    q_axes.AXIS_Y += (100  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
+//    q_axes.AXIS_Z -= (100  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
   }
   else {
     x_axes.AXIS_X += -(10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);

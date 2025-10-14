@@ -90,7 +90,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   BSP_ACCELERO_Init();
-  int16_t pDataXYZ[3] = {0};
+  int16_t pDataXYZ[3] = {0,0,0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -121,6 +121,7 @@ int main(void)
     /* USER CODE END WHILE */
 	MX_BlueNRG_MS_Process();
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
