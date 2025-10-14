@@ -159,6 +159,12 @@ void user_notify(void * pData)
           Read_Request_CB(pr->attr_handle);
         }
         break;
+      case EVT_BLUE_GATT_WRITE_PERMIT_REQ:
+      {
+    	  //
+      }
+
+        break;
       }
 
     }

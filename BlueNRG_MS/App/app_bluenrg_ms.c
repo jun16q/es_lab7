@@ -186,21 +186,29 @@ void MX_BlueNRG_MS_Init(void)
 
   PRINTF("BLE Stack Initialized\n");
 
-  ret = Add_HWServW2ST_Service();
+  ret = Add_Acc_Service();
   if(ret == BLE_STATUS_SUCCESS) {
-    PRINTF("BlueMS HW service added successfully.\n");
+	PRINTF("BlueMS HW service added successfully.\n");
   } else {
     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
     while(1);
   }
 
-  ret = Add_SWServW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS) {
-     PRINTF("BlueMS SW service added successfully.\n");
-  } else {
-     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
-     while(1);
-  }
+//  ret = Add_HWServW2ST_Service();
+//  if(ret == BLE_STATUS_SUCCESS) {
+//    PRINTF("BlueMS HW service added successfully.\n");
+//  } else {
+//    PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
+//    while(1);
+//  }
+
+//  ret = Add_SWServW2ST_Service();
+//  if(ret == BLE_STATUS_SUCCESS) {
+//     PRINTF("BlueMS SW service added successfully.\n");
+//  } else {
+//     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
+//     while(1);
+//  }
 
   /* Set output power level */
   ret = aci_hal_set_tx_power_level(1,4);
