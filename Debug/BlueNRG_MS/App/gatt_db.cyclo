@@ -4,4 +4,5 @@
 ../BlueNRG_MS/App/gatt_db.c:212:12:Acc_Update	2
 ../BlueNRG_MS/App/gatt_db.c:247:12:Quat_Update	2
 ../BlueNRG_MS/App/gatt_db.c:298:6:Read_Request_CB	3
-../BlueNRG_MS/App/gatt_db.c:324:12:BlueMS_Environmental_Update	2
+../BlueNRG_MS/App/gatt_db.c:325:6:Attribute_Modified_CB	3
+../BlueNRG_MS/App/gatt_db.c:336:12:BlueMS_Environmental_Update	2

@@ -116,8 +116,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
+//	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+//	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
     /* USER CODE END WHILE */
 	MX_BlueNRG_MS_Process();
     /* USER CODE BEGIN 3 */

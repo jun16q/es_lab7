@@ -159,9 +159,11 @@ void user_notify(void * pData)
           Read_Request_CB(pr->attr_handle);
         }
         break;
-      case EVT_BLUE_GATT_WRITE_PERMIT_REQ:
+      case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
       {
     	  //
+    	  evt_gatt_attr_modified_IDB04A1 *modified = (void*) blue_evt->data;
+    	  Attribute_Modified_CB(modified->attr_handle, modified->data_length, modified->att_data);
       }
 
         break;

@@ -105,7 +105,7 @@ tBleStatus Add_Acc_Service(void)
   COPY_ACC_SAMPLE_FREQ_CHAR_UUID(uuid);
   BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
   ret = aci_gatt_add_char(AccServHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
-                          4, //int 4 bytes
+                          2, //int 4 bytes
 						  CHAR_PROP_WRITE | CHAR_PROP_READ,
                           ATTR_PERMISSION_NONE,
 						  GATT_NOTIFY_ATTRIBUTE_WRITE,
@@ -320,6 +320,18 @@ void Read_Request_CB(uint16_t handle)
     }
   }
 }
+
+
+void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
+{
+  if(handle == AccSampleFreqHandle + 1) { //  +1 is Value handle
+      printf("Received data from client: ");
+      for(int i=0; i<data_length; i++)
+          printf("%02X ", att_data[i]);
+      printf("\n");
+  }
+}
+
 
 tBleStatus BlueMS_Environmental_Update(int32_t press, int16_t temp)
 {

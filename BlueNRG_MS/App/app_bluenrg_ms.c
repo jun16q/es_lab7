@@ -260,7 +260,7 @@ static void User_Process(void)
 {
 //  float data_t;
 //  float data_p;
-  static uint32_t counter = 0;
+//  static uint32_t counter = 0;
 
   if (set_connectable)
   {
