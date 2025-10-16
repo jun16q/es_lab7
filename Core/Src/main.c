@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "app_bluenrg_ms.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -51,6 +52,8 @@ UART_HandleTypeDef huart3;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
+osThreadId TaskBLEHandle;
+osThreadId TaskACCHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -63,6 +66,9 @@ static void MX_I2C2_Init(void);
 static void MX_QUADSPI_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
+void StartTaskBLE(void const * argument);
+void StartTaskACC(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -89,8 +95,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  BSP_ACCELERO_Init();
-  int16_t pDataXYZ[3] = {0,0,0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -103,7 +107,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DFSDM1_Init();
-//  MX_I2C2_Init();
+  MX_I2C2_Init();
   MX_QUADSPI_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
@@ -112,14 +116,46 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of TaskBLE */
+  osThreadDef(TaskBLE, StartTaskBLE, osPriorityHigh, 0, 128);
+  TaskBLEHandle = osThreadCreate(osThread(TaskBLE), NULL);
+
+  /* definition and creation of TaskACC */
+  osThreadDef(TaskACC, StartTaskACC, osPriorityNormal, 0, 128);
+  TaskACCHandle = osThreadCreate(osThread(TaskACC), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-//	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
     /* USER CODE END WHILE */
-	MX_BlueNRG_MS_Process();
+
     /* USER CODE BEGIN 3 */
 
   }
@@ -551,10 +587,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -565,6 +601,50 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartTaskBLE */
+/**
+  * @brief  Function implementing the TaskBLE thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartTaskBLE */
+void StartTaskBLE(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+	printf("taskble");
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartTaskACC */
+/**
+* @brief Function implementing the TaskACC thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskACC */
+void StartTaskACC(void const * argument)
+{
+  /* USER CODE BEGIN StartTaskACC */
+	printf("taskacc");
+  BSP_ACCELERO_Init();
+  int16_t pDataXYZ[3] = {0,0,0};
+  /* Infinite loop */
+  for(;;)
+  {
+	printf("taskacc");
+	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
+	MX_BlueNRG_MS_Process();
+//    osDelay(1);
+  }
+  /* USER CODE END StartTaskACC */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

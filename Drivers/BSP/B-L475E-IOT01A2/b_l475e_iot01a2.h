@@ -369,4 +369,3 @@ int32_t BSP_COM_RegisterMspCallbacks(COM_TypeDef COM , BSP_COM_Cb_t *Callback);
 #endif
 
 #endif /* __B_L475E_IOT01A2__H */
-

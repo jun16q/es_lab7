@@ -43,11 +43,6 @@ do {\
 }while(0)
 
 /* Hardware Characteristics Service */
-
-#define COPY_ACC_SERVICE_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x00,0x01,0x11,0xe1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xbb)
-#define COPY_ACC_VALUE_CHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x00,0x01,0x11,0xe1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xcc)
-#define COPY_ACC_SAMPLE_FREQ_CHAR_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x00,0x01,0x11,0xe1,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xdd)
-
 #define COPY_HW_SENS_W2ST_SERVICE_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x00,0x01,0x11,0xe1,0x9a,0xb4,0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 #define COPY_ENVIRONMENTAL_W2ST_CHAR_UUID(uuid_struct) COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x00,0x01,0x11,0xe1,0xac,0x36,0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 #define COPY_ACC_GYRO_MAG_W2ST_CHAR_UUID(uuid_struct)  COPY_UUID_128(uuid_struct,0x00,0xE0,0x00,0x00,0x00,0x01,0x11,0xe1,0xac,0x36,0x00,0x02,0xa5,0xd5,0xc5,0x1b)
@@ -57,8 +52,6 @@ do {\
 
 uint16_t HWServW2STHandle, EnvironmentalCharHandle, AccGyroMagCharHandle;
 uint16_t SWServW2STHandle, QuaternionsCharHandle;
-
-uint16_t AccServHandle, AccValueHandle, AccSampleFreqHandle;
 
 /* UUIDS */
 Service_UUID_t service_uuid;
@@ -76,47 +69,6 @@ extern uint32_t start_time;
  * @param  None
  * @retval tBleStatus Status
  */
-tBleStatus Add_Acc_Service(void)
-{
-  uint8_t uuid[16];
-  tBleStatus ret;
-
-  /* Add Motion Sensor Service */
-  COPY_ACC_SERVICE_UUID(uuid);
-  BLUENRG_memcpy(&service_uuid.Service_UUID_128, uuid, 16);
-  ret = aci_gatt_add_serv(UUID_TYPE_128, service_uuid.Service_UUID_128, PRIMARY_SERVICE, 11, &AccServHandle);
-  if (ret != BLE_STATUS_SUCCESS)
-    return BLE_STATUS_ERROR;
-
-  /* Add Acceleration Value Characteristic */
-  COPY_ACC_VALUE_CHAR_UUID(uuid);
-  BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
-  ret = aci_gatt_add_char(AccServHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
-                          6,  // 3axis * 2 bytes = 6 bytes
-                          CHAR_PROP_NOTIFY | CHAR_PROP_READ,
-                          ATTR_PERMISSION_NONE,
-                          GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
-                          16, 0, &AccValueHandle);
-  if (ret != BLE_STATUS_SUCCESS)
-    return BLE_STATUS_ERROR;
-
-
-  /* Add Acceleration Sampling Frequency Characteristic */
-  COPY_ACC_SAMPLE_FREQ_CHAR_UUID(uuid);
-  BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
-  ret = aci_gatt_add_char(AccServHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
-                          2, //int 4 bytes
-						  CHAR_PROP_WRITE | CHAR_PROP_READ,
-                          ATTR_PERMISSION_NONE,
-						  GATT_NOTIFY_ATTRIBUTE_WRITE,
-                          16, 0, &AccSampleFreqHandle);
-  if (ret != BLE_STATUS_SUCCESS)
-    return BLE_STATUS_ERROR;
-
-
-  return BLE_STATUS_SUCCESS;
-}
-
 tBleStatus Add_HWServW2ST_Service(void)
 {
   tBleStatus ret;
@@ -130,19 +82,19 @@ tBleStatus Add_HWServW2ST_Service(void)
   if (ret != BLE_STATUS_SUCCESS)
     return BLE_STATUS_ERROR;
 
-//  /* Fill the Environmental BLE Characteristc */
-//  COPY_ENVIRONMENTAL_W2ST_CHAR_UUID(uuid);
-//  uuid[14] |= 0x04; /* One Temperature value*/
-//  uuid[14] |= 0x10; /* Pressure value*/
-//  BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
-//  ret =  aci_gatt_add_char(HWServW2STHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
-//                           2+2+4,
-//                           CHAR_PROP_NOTIFY|CHAR_PROP_READ,
-//                           ATTR_PERMISSION_NONE,
-//                           GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
-//                           16, 0, &EnvironmentalCharHandle);
-//  if (ret != BLE_STATUS_SUCCESS)
-//    return BLE_STATUS_ERROR;
+  /* Fill the Environmental BLE Characteristc */
+  COPY_ENVIRONMENTAL_W2ST_CHAR_UUID(uuid);
+  uuid[14] |= 0x04; /* One Temperature value*/
+  uuid[14] |= 0x10; /* Pressure value*/
+  BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
+  ret =  aci_gatt_add_char(HWServW2STHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
+                           2+2+4,
+                           CHAR_PROP_NOTIFY|CHAR_PROP_READ,
+                           ATTR_PERMISSION_NONE,
+                           GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
+                           16, 0, &EnvironmentalCharHandle);
+  if (ret != BLE_STATUS_SUCCESS)
+    return BLE_STATUS_ERROR;
 
   /* Fill the AccGyroMag BLE Characteristc */
   COPY_ACC_GYRO_MAG_W2ST_CHAR_UUID(uuid);
@@ -153,12 +105,6 @@ tBleStatus Add_HWServW2ST_Service(void)
                            ATTR_PERMISSION_NONE,
                            GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
                            16, 0, &AccGyroMagCharHandle);
-//  const char AccelCharName[] = "Acceleration";
-//  aci_gatt_add_char_desc(HWServW2STHandle, AccGyroMagCharHandle,
-//                         UUID_TYPE_16, 0x2901, strlen(AccelCharName),strlen(AccelCharName),
-//                         (uint8_t *)AccelCharName,
-//                         ATTR_PERMISSION_NONE, ATTR_ACCESS_READ_ONLY, 0,16,0, NULL);
-
   if (ret != BLE_STATUS_SUCCESS)
     return BLE_STATUS_ERROR;
 
@@ -209,28 +155,27 @@ fail:
  * @param  AxesRaw_t structure containing acceleration value in mg.
  * @retval tBleStatus Status
  */
-tBleStatus Acc_Update(AxesRaw_t *x_axes /*, AxesRaw_t *g_axes, AxesRaw_t *m_axes*/ )
+tBleStatus Acc_Update(AxesRaw_t *x_axes, AxesRaw_t *g_axes, AxesRaw_t *m_axes)
 {
-  uint8_t buff[2*3]; //only acc
-//  uint8_t buff[2+2*3*3];
+  uint8_t buff[2+2*3*3];
   tBleStatus ret;
 
-//  HOST_TO_LE_16(buff,(HAL_GetTick()>>3));
+  HOST_TO_LE_16(buff,(HAL_GetTick()>>3));
 
-  HOST_TO_LE_16(buff,-x_axes->AXIS_Y);
-  HOST_TO_LE_16(buff+2, x_axes->AXIS_X);
-  HOST_TO_LE_16(buff+4,-x_axes->AXIS_Z);
+  HOST_TO_LE_16(buff+2,-x_axes->AXIS_Y);
+  HOST_TO_LE_16(buff+4, x_axes->AXIS_X);
+  HOST_TO_LE_16(buff+6,-x_axes->AXIS_Z);
 
-//  HOST_TO_LE_16(buff+8,g_axes->AXIS_Y);
-//  HOST_TO_LE_16(buff+10,g_axes->AXIS_X);
-//  HOST_TO_LE_16(buff+12,g_axes->AXIS_Z);
-//
-//  HOST_TO_LE_16(buff+14,m_axes->AXIS_Y);
-//  HOST_TO_LE_16(buff+16,m_axes->AXIS_X);
-//  HOST_TO_LE_16(buff+18,m_axes->AXIS_Z);
+  HOST_TO_LE_16(buff+8,g_axes->AXIS_Y);
+  HOST_TO_LE_16(buff+10,g_axes->AXIS_X);
+  HOST_TO_LE_16(buff+12,g_axes->AXIS_Z);
 
-  ret = aci_gatt_update_char_value(AccServHandle, AccValueHandle,
-				   0, 2*3, buff);
+  HOST_TO_LE_16(buff+14,m_axes->AXIS_Y);
+  HOST_TO_LE_16(buff+16,m_axes->AXIS_X);
+  HOST_TO_LE_16(buff+18,m_axes->AXIS_Z);
+
+  ret = aci_gatt_update_char_value(HWServW2STHandle, AccGyroMagCharHandle,
+				   0, 2+2*3*3, buff);
   if (ret != BLE_STATUS_SUCCESS){
     PRINTF("Error while updating Acceleration characteristic: 0x%02X\n",ret) ;
     return BLE_STATUS_ERROR ;
@@ -299,17 +244,17 @@ void Read_Request_CB(uint16_t handle)
 {
   tBleStatus ret;
 
-  if(handle == AccValueHandle + 1)
+  if(handle == AccGyroMagCharHandle + 1)
   {
-    Acc_Update(&x_axes/*, &g_axes, &m_axes*/);
+    Acc_Update(&x_axes, &g_axes, &m_axes);
   }
-//  else if (handle == EnvironmentalCharHandle + 1)
-//  {
-//    float data_t, data_p;
-//    data_t = 27.0 + ((uint64_t)rand()*5)/RAND_MAX; //T sensor emulation
-//    data_p = 1000.0 + ((uint64_t)rand()*100)/RAND_MAX; //P sensor emulation
-//    BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
-//  }
+  else if (handle == EnvironmentalCharHandle + 1)
+  {
+    float data_t, data_p;
+    data_t = 27.0 + ((uint64_t)rand()*5)/RAND_MAX; //T sensor emulation
+    data_p = 1000.0 + ((uint64_t)rand()*100)/RAND_MAX; //P sensor emulation
+    BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
+  }
 
   if(connection_handle !=0)
   {
@@ -320,18 +265,6 @@ void Read_Request_CB(uint16_t handle)
     }
   }
 }
-
-
-void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
-{
-  if(handle == AccSampleFreqHandle + 1) { //  +1 is Value handle
-      printf("Received data from client: ");
-      for(int i=0; i<data_length; i++)
-          printf("%02X ", att_data[i]);
-      printf("\n");
-  }
-}
-
 
 tBleStatus BlueMS_Environmental_Update(int32_t press, int16_t temp)
 {

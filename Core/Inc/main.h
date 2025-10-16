@@ -28,8 +28,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
-#include "hci_tl_interface.h"
 
+#include "hci_tl_interface.h"
 #include "b_l475e_iot01a2.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

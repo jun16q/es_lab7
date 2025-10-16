@@ -34,7 +34,7 @@
 #include "bluenrg_gatt_aci.h"
 #include "bluenrg_hal_aci.h"
 #include "sm.h"
-// #include "stm32l4xx_hal_tim.h"
+//#include "stm32l4xx_hal_tim.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -103,7 +103,7 @@ void MX_BlueNRG_MS_Init(void)
   /* USER CODE END BlueNRG_MS_Init_PreTreatment */
 
   /* Initialize the peripherals and the BLE Stack */
-  const char *name = "BlueNRG";
+  const char *name = "junisgay";
   uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
 
   uint8_t  bdaddr_len_out;
@@ -186,29 +186,21 @@ void MX_BlueNRG_MS_Init(void)
 
   PRINTF("BLE Stack Initialized\n");
 
-  ret = Add_Acc_Service();
+  ret = Add_HWServW2ST_Service();
   if(ret == BLE_STATUS_SUCCESS) {
-	PRINTF("BlueMS Acc service added successfully.\n");
+    PRINTF("BlueMS HW service added successfully.\n");
   } else {
-    PRINTF("Error while adding BlueMS Acc service: 0x%02x\r\n", ret);
+    PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
     while(1);
   }
 
-//  ret = Add_HWServW2ST_Service();
-//  if(ret == BLE_STATUS_SUCCESS) {
-//    PRINTF("BlueMS HW service added successfully.\n");
-//  } else {
-//    PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
-//    while(1);
-//  }
-
-//  ret = Add_SWServW2ST_Service();
-//  if(ret == BLE_STATUS_SUCCESS) {
-//     PRINTF("BlueMS SW service added successfully.\n");
-//  } else {
-//     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
-//     while(1);
-//  }
+  ret = Add_SWServW2ST_Service();
+  if(ret == BLE_STATUS_SUCCESS) {
+     PRINTF("BlueMS SW service added successfully.\n");
+  } else {
+     PRINTF("Error while adding BlueMS HW service: 0x%02x\r\n", ret);
+     while(1);
+  }
 
   /* Set output power level */
   ret = aci_hal_set_tx_power_level(1,4);
@@ -258,9 +250,9 @@ static void User_Init(void)
  */
 static void User_Process(void)
 {
-//  float data_t;
-//  float data_p;
-//  static uint32_t counter = 0;
+  float data_t;
+  float data_p;
+  static uint32_t counter = 0;
 
   if (set_connectable)
   {
@@ -286,32 +278,22 @@ static void User_Process(void)
     if (connected)
     {
       /* Set a random seed */
-//      srand(HAL_GetTick());
+      srand(HAL_GetTick());
 
-//      /* Update emulated Environmental data */
-//      Set_Random_Environmental_Values(&data_t, &data_p);
-//      BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
+      /* Update emulated Environmental data */
+      Set_Random_Environmental_Values(&data_t, &data_p);
+      BlueMS_Environmental_Update((int32_t)(data_p *100), (int16_t)(data_t * 10));
 
       /* Update emulated Acceleration, Gyroscope and Sensor Fusion data */
-//      Set_Random_Motion_Values(counter);
+      Set_Random_Motion_Values(counter);
+      Acc_Update(&x_axes, &g_axes, &m_axes);
+      Quat_Update(&q_axes);
 
-      /*******************/
-      int16_t pDataAcc[3] = {0,0,0};
-      BSP_ACCELERO_AccGetXYZ(pDataAcc);
-      x_axes.AXIS_X = pDataAcc[0];
-      x_axes.AXIS_Y = pDataAcc[1];
-      x_axes.AXIS_Z = pDataAcc[2];
-      Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
-      /*******************/
-
-
-//      Quat_Update(&q_axes);
-//
-//      counter ++;
-//      if (counter == 40) {
-//        counter = 0;
-//        Reset_Motion_Values();
-//      }
+      counter ++;
+      if (counter == 40) {
+        counter = 0;
+        Reset_Motion_Values();
+      }
 #if !USE_BUTTON
       HAL_Delay(1000); /* wait 1 sec before sending new data */
 #endif
@@ -347,16 +329,16 @@ static void Set_Random_Motion_Values(uint32_t cnt)
     x_axes.AXIS_X +=  (10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
     x_axes.AXIS_Y += -(10  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
     x_axes.AXIS_Z +=  (10  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
-//    g_axes.AXIS_X +=  (100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
-//    g_axes.AXIS_Y += -(100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-//    g_axes.AXIS_Z +=  (100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
-//    m_axes.AXIS_X +=  (3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-//    m_axes.AXIS_Y += -(3  + ((uint64_t)rand()*4*cnt)/RAND_MAX);
-//    m_axes.AXIS_Z +=  (3  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-//
-//    q_axes.AXIS_X -= (100  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
-//    q_axes.AXIS_Y += (100  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
-//    q_axes.AXIS_Z -= (100  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
+    g_axes.AXIS_X +=  (100 + ((uint64_t)rand()*2*cnt)/RAND_MAX);
+    g_axes.AXIS_Y += -(100 + ((uint64_t)rand()*4*cnt)/RAND_MAX);
+    g_axes.AXIS_Z +=  (100 + ((uint64_t)rand()*6*cnt)/RAND_MAX);
+    m_axes.AXIS_X +=  (3  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
+    m_axes.AXIS_Y += -(3  + ((uint64_t)rand()*4*cnt)/RAND_MAX);
+    m_axes.AXIS_Z +=  (3  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
+
+    q_axes.AXIS_X -= (100  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
+    q_axes.AXIS_Y += (100  + ((uint64_t)rand()*5*cnt)/RAND_MAX);
+    q_axes.AXIS_Z -= (100  + ((uint64_t)rand()*7*cnt)/RAND_MAX);
   }
   else {
     x_axes.AXIS_X += -(10  + ((uint64_t)rand()*3*cnt)/RAND_MAX);
