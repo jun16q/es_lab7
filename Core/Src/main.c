@@ -38,7 +38,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+int sample_period = 2;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -612,10 +612,11 @@ static void MX_GPIO_Init(void)
 void StartTaskBLE(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-	printf("taskble");
+//	printf("a");
   /* Infinite loop */
   for(;;)
   {
+//	  printf("taskble");
     osDelay(1);
   }
   /* USER CODE END 5 */
@@ -631,15 +632,14 @@ void StartTaskBLE(void const * argument)
 void StartTaskACC(void const * argument)
 {
   /* USER CODE BEGIN StartTaskACC */
-	printf("taskacc");
-  BSP_ACCELERO_Init();
-  int16_t pDataXYZ[3] = {0,0,0};
+//	printf("askacc");
+//  BSP_ACCELERO_Init();
+//  int16_t pDataXYZ[3] = {0,0,0};
   /* Infinite loop */
   for(;;)
   {
-	printf("taskacc");
-	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
+//	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+//	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
 	MX_BlueNRG_MS_Process();
 //    osDelay(1);
   }
