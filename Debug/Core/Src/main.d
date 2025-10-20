@@ -61,7 +61,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h \
- ../BlueNRG_MS/App/app_bluenrg_ms.h
+ ../BlueNRG_MS/App/app_bluenrg_ms.h ../BlueNRG_MS/App/gatt_db.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h \
+ ../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -126,3 +128,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/event_groups.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/timers.h:
 ../BlueNRG_MS/App/app_bluenrg_ms.h:
+../BlueNRG_MS/App/gatt_db.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_def.h:
+../Middlewares/ST/BlueNRG-MS/includes/bluenrg_types.h:

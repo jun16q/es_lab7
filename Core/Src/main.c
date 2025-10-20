@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "gatt_db.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,6 +40,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 int sample_period = 2;
+extern volatile int     connected;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -55,7 +57,12 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 osThreadId TaskBLEHandle;
 osThreadId TaskACCHandle;
 /* USER CODE BEGIN PV */
-
+osSemaphoreId sem_id;
+osSemaphoreDef(sampr);
+extern AxesRaw_t x_axes;
+extern AxesRaw_t g_axes;
+extern AxesRaw_t m_axes;
+extern AxesRaw_t q_axes;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,6 +102,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  BSP_ACCELERO_Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -122,6 +130,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+
+  sem_id = osSemaphoreCreate(osSemaphore(sampr), 1);
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -134,11 +144,11 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of TaskBLE */
-  osThreadDef(TaskBLE, StartTaskBLE, osPriorityHigh, 0, 128);
+  osThreadDef(TaskBLE, StartTaskBLE, osPriorityHigh, 0, 512);
   TaskBLEHandle = osThreadCreate(osThread(TaskBLE), NULL);
 
   /* definition and creation of TaskACC */
-  osThreadDef(TaskACC, StartTaskACC, osPriorityNormal, 0, 128);
+  osThreadDef(TaskACC, StartTaskACC, osPriorityNormal, 0, 4096);
   TaskACCHandle = osThreadCreate(osThread(TaskACC), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -616,8 +626,21 @@ void StartTaskBLE(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-//	  printf("taskble");
-    osDelay(1);
+//	  printf("hi\r\n");
+	  MX_BlueNRG_MS_Process();
+	  if (connected&sample_period>0)
+	  	  {
+	  //	  	  printf("hi\r\n");
+	  		  int16_t pDataAcc[3] = {0,0,0};
+	  		  BSP_ACCELERO_AccGetXYZ(pDataAcc);
+	  		  x_axes.AXIS_X = pDataAcc[0];
+	  	      x_axes.AXIS_Y = pDataAcc[1];
+	  		  x_axes.AXIS_Z = pDataAcc[2];
+	  		  Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+	  		  osDelay(sample_period);
+	  	  }
+	  else osDelay(100);
+
   }
   /* USER CODE END 5 */
 }
@@ -632,16 +655,29 @@ void StartTaskBLE(void const * argument)
 void StartTaskACC(void const * argument)
 {
   /* USER CODE BEGIN StartTaskACC */
-//	printf("askacc");
 //  BSP_ACCELERO_Init();
-//  int16_t pDataXYZ[3] = {0,0,0};
   /* Infinite loop */
   for(;;)
   {
+//	  printf("frrfrf\r\n");
 //	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
 //	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
-	MX_BlueNRG_MS_Process();
+//	osSemaphoreWait(sem_id, osWaitForever);
+//	MX_BlueNRG_MS_Process();
 //    osDelay(1);
+  if (connected)
+	  {
+//	  	  printf("hi\r\n");
+		  int16_t pDataAcc[3] = {0,0,0};
+		  BSP_ACCELERO_AccGetXYZ(pDataAcc);
+		  x_axes.AXIS_X = pDataAcc[0];
+	      x_axes.AXIS_Y = pDataAcc[1];
+		  x_axes.AXIS_Z = pDataAcc[2];
+		  Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+		  osDelay(sample_period+1000);
+	  }
+//
+  else osDelay(1);
   }
   /* USER CODE END StartTaskACC */
 }

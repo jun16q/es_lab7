@@ -109,7 +109,7 @@ tBleStatus Add_Acc_Service(void)
                           2, //2bytes
 						  CHAR_PROP_WRITE | CHAR_PROP_READ,
                           ATTR_PERMISSION_NONE,
-						  GATT_NOTIFY_ATTRIBUTE_WRITE,
+						  GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP,
                           16, 0, &AccSampleFreqHandle);
   if (ret != BLE_STATUS_SUCCESS)
     return BLE_STATUS_ERROR;
@@ -347,12 +347,24 @@ void Read_Request_CB(uint16_t handle)
 
 void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
 {
+	uint8_t data_copy[32];
+	    uint8_t copied_len = 0;
+
+	    if (data_length > 0 && att_data != NULL) {
+	        copied_len = (data_length > 32) ? 32 : data_length;
+	        memcpy(data_copy, att_data, copied_len);
+	    } else {
+	        return;
+	    }
+
     if (handle == AccSampleFreqHandle + 1) {
     	for (int i = 0; i < data_length; i++) {
-    	        printf("%02X ", att_data[i]);
+    	        printf("%02X ", data_copy[i]);
 		}
-		sample_period = (att_data[1] << 8) | att_data[0];
-        printf("  Parsed sample period = %u\n", sample_period);
+		int sample_rate = (data_copy[1] << 8) | data_copy[0];
+		if (sample_rate > 0) sample_period = 1000 / sample_rate;
+		printf("Parsed sample rate = %u\r\n", sample_rate);
+        printf("Parsed sample period = %u\r\n", sample_period);
     }
 }
 tBleStatus BlueMS_Environmental_Update(int32_t press, int16_t temp)

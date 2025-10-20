@@ -45,6 +45,7 @@ __IO uint32_t connected = FALSE;
 
 extern uint16_t EnvironmentalCharHandle;
 extern uint16_t AccGyroMagCharHandle;
+extern int sample_period;
 
 volatile uint8_t request_free_fall_notify = FALSE;
 
@@ -92,7 +93,7 @@ void Set_DeviceConnectable(void)
 
   hci_le_set_scan_resp_data(0, NULL);
 
-  PRINTF("Set General Discoverable Mode.\n");
+  PRINTF("Set General Discoverable Mode.\r\n");
 
   ret = aci_gap_set_discoverable(ADV_DATA_TYPE,
                                 (ADV_INTERVAL_MIN_MS*1000)/625,(ADV_INTERVAL_MAX_MS*1000)/625,
@@ -159,19 +160,44 @@ void user_notify(void * pData)
           Read_Request_CB(pr->attr_handle);
         }
         break;
-      case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
-      {
-    	  //
-    	  evt_gatt_attr_modified_IDB04A1 *modified = (void*) blue_evt->data;
-    	  Attribute_Modified_CB(modified->attr_handle, modified->data_length, modified->att_data);
-      }
 
-        break;
+      case EVT_BLUE_GATT_WRITE_PERMIT_REQ:
+      {
+          evt_gatt_write_permit_req *write_req = (void*)blue_evt->data;
+
+
+              uint16_t sample_rate = (write_req->data[1] << 8) | write_req->data[0];
+
+              printf("WRITE_PERMIT_REQ: Received sample_rate = %u\r\n", sample_rate);
+
+              if (sample_rate > 0 )
+              {
+                  sample_period = 1000 / sample_rate;
+
+                  aci_gatt_write_response(write_req->conn_handle,
+                                          write_req->attr_handle,
+                                          0, // 0 = Write accepted
+                                          BLE_STATUS_SUCCESS,
+                                          write_req->data_length,
+                                          write_req->data);
+              }
+              else
+              {
+                  aci_gatt_write_response(write_req->conn_handle,
+                                          write_req->attr_handle,
+                                          1, // 1 = Write rejected
+                                          0x08, // ATT_ERR_INVALID_VALUE
+                                          0,
+                                          NULL);
+              }
+
       }
+      break;
 
     }
     break;
   }
+}
 }
 
 /**
@@ -203,5 +229,5 @@ void GAP_ConnectionComplete_CB(uint8_t addr[6], uint16_t handle)
   for(uint32_t i = 5; i > 0; i--){
     PRINTF("%02X-", addr[i]);
   }
-  PRINTF("%02X\n", addr[0]);
+  PRINTF("%02X\r\n", addr[0]);
 }
