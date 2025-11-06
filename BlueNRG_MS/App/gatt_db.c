@@ -67,6 +67,7 @@ Char_UUID_t char_uuid;
 extern AxesRaw_t x_axes;
 extern AxesRaw_t g_axes;
 extern AxesRaw_t m_axes;
+extern int sample_period;
 
 extern uint16_t connection_handle;
 extern uint32_t start_time;
@@ -84,7 +85,7 @@ tBleStatus Add_Acc_Service(void)
   /* Add Motion Sensor Service */
   COPY_ACC_SERVICE_UUID(uuid);
   BLUENRG_memcpy(&service_uuid.Service_UUID_128, uuid, 16);
-  ret = aci_gatt_add_serv(UUID_TYPE_128, service_uuid.Service_UUID_128, PRIMARY_SERVICE, 11, &AccServHandle);
+  ret = aci_gatt_add_serv(UUID_TYPE_128, service_uuid.Service_UUID_128, PRIMARY_SERVICE, 8, &AccServHandle);
   if (ret != BLE_STATUS_SUCCESS)
     return BLE_STATUS_ERROR;
 
@@ -105,10 +106,10 @@ tBleStatus Add_Acc_Service(void)
   COPY_ACC_SAMPLE_FREQ_CHAR_UUID(uuid);
   BLUENRG_memcpy(&char_uuid.Char_UUID_128, uuid, 16);
   ret = aci_gatt_add_char(AccServHandle, UUID_TYPE_128, char_uuid.Char_UUID_128,
-                          2, //int 4 bytes
+                          2, //2bytes
 						  CHAR_PROP_WRITE | CHAR_PROP_READ,
                           ATTR_PERMISSION_NONE,
-						  GATT_NOTIFY_ATTRIBUTE_WRITE,
+						  GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP,
                           16, 0, &AccSampleFreqHandle);
   if (ret != BLE_STATUS_SUCCESS)
     return BLE_STATUS_ERROR;
@@ -321,18 +322,51 @@ void Read_Request_CB(uint16_t handle)
   }
 }
 
+//
+//void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
+//{
+//printf("Modified handle: 0x%04X, expected: 0x%04X\n", handle, AccSampleFreqHandle + 1);
+//  if(handle == AccSampleFreqHandle + 1) { //  +1 is Value handle
+//
+//      printf("Received data from client\n");
+//      printf("Data length: %d\n", data_length);
+//      for (int i = 0; i < data_length; i++) {
+//                  printf("%02X ", att_data[i]);
+//              }
+//              printf("\n");
+//
+//              if (data_length >= 2) {
+//                  sample_period = (att_data[1] << 8) | att_data[0];  // little endian
+//                  printf("Parsed sample period: %u\n", sample_period);
+//              } else if (data_length == 1) {
+//                  sample_period = att_data[0];
+//                  printf("Parsed sample period (1 byte): %u\n", sample_period);
+//              }
+//  }
+//}
 
 void Attribute_Modified_CB(uint16_t handle, uint8_t data_length, uint8_t *att_data)
 {
-  if(handle == AccSampleFreqHandle + 1) { //  +1 is Value handle
-      printf("Received data from client: ");
-      for(int i=0; i<data_length; i++)
-          printf("%02X ", att_data[i]);
-      printf("\n");
-  }
+	uint8_t data_copy[32];
+	    uint8_t copied_len = 0;
+
+	    if (data_length > 0 && att_data != NULL) {
+	        copied_len = (data_length > 32) ? 32 : data_length;
+	        memcpy(data_copy, att_data, copied_len);
+	    } else {
+	        return;
+	    }
+
+    if (handle == AccSampleFreqHandle + 1) {
+    	for (int i = 0; i < data_length; i++) {
+    	        printf("%02X ", data_copy[i]);
+		}
+		int sample_rate = (data_copy[1] << 8) | data_copy[0];
+		if (sample_rate > 0) sample_period = 1000 / sample_rate;
+		printf("Parsed sample rate = %u\r\n", sample_rate);
+        printf("Parsed sample period = %u\r\n", sample_period);
+    }
 }
-
-
 tBleStatus BlueMS_Environmental_Update(int32_t press, int16_t temp)
 {
   tBleStatus ret;

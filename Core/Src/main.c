@@ -18,11 +18,16 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "app_bluenrg_ms.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "gatt_db.h"
+#include "arm_math.h"
+#include "math_helper.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,12 +37,30 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TEST_LENGTH_SAMPLES  320
+#define SNR_THRESHOLD_F32    140.0f
+#define BLOCK_SIZE            32
+#define NUM_TAPS              29
+extern float32_t testInput_f32_1kHz_15kHz[TEST_LENGTH_SAMPLES];
+extern float32_t refOutput[TEST_LENGTH_SAMPLES];
+static float32_t testOutput[TEST_LENGTH_SAMPLES];
+static float32_t firStateF32[BLOCK_SIZE + NUM_TAPS - 1];
+const float32_t firCoeffs32[NUM_TAPS] = {
+  -0.0018225230f, -0.0015879294f, +0.0000000000f, +0.0036977508f, +0.0080754303f, +0.0085302217f, -0.0000000000f, -0.0173976984f,
+  -0.0341458607f, -0.0333591565f, +0.0000000000f, +0.0676308395f, +0.1522061835f, +0.2229246956f, +0.2504960933f, +0.2229246956f,
+  +0.1522061835f, +0.0676308395f, +0.0000000000f, -0.0333591565f, -0.0341458607f, -0.0173976984f, -0.0000000000f, +0.0085302217f,
+  +0.0080754303f, +0.0036977508f, +0.0000000000f, -0.0015879294f, -0.0018225230f
+};
+uint32_t blockSize = BLOCK_SIZE;
+uint32_t numBlocks = TEST_LENGTH_SAMPLES/BLOCK_SIZE;
 
+float32_t  snr;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+int sample_period = 2;
+extern volatile int     connected;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -51,8 +74,15 @@ UART_HandleTypeDef huart3;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
+osThreadId TaskBLEHandle;
+osThreadId TaskACCHandle;
 /* USER CODE BEGIN PV */
-
+osSemaphoreId sem_id;
+osSemaphoreDef(sampr);
+extern AxesRaw_t x_axes;
+extern AxesRaw_t g_axes;
+extern AxesRaw_t m_axes;
+extern AxesRaw_t q_axes;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,6 +93,9 @@ static void MX_I2C2_Init(void);
 static void MX_QUADSPI_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
+void StartTaskBLE(void const * argument);
+void StartTaskACC(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -90,7 +123,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
   BSP_ACCELERO_Init();
-  int16_t pDataXYZ[3] = {0,0,0};
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -103,23 +135,102 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DFSDM1_Init();
-//  MX_I2C2_Init();
+  MX_I2C2_Init();
   MX_QUADSPI_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_BlueNRG_MS_Init();
   /* USER CODE BEGIN 2 */
+  uint32_t i;
+    arm_fir_instance_f32 S;
+    arm_status status;
+    float32_t  *inputF32, *outputF32;
 
+    /* Initialize input and output buffer pointers */
+    inputF32 = &testInput_f32_1kHz_15kHz[0];
+    outputF32 = &testOutput[0];
+
+    /* Call FIR init function to initialize the instance structure. */
+    arm_fir_init_f32(&S, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32[0], blockSize);
+
+    /* ----------------------------------------------------------------------
+    ** Call the FIR process function for every blockSize samples
+    ** ------------------------------------------------------------------- */
+
+    for(i=0; i < numBlocks; i++)
+    {
+      arm_fir_f32(&S, inputF32 + (i * blockSize), outputF32 + (i * blockSize), blockSize);
+    }
+
+    /* ----------------------------------------------------------------------
+    ** Compare the generated output against the reference output computed
+    ** in MATLAB.
+    ** ------------------------------------------------------------------- */
+
+    snr = arm_snr_f32(&refOutput[0], &testOutput[0], TEST_LENGTH_SAMPLES);
+
+    if (snr < SNR_THRESHOLD_F32)
+    {
+      status = ARM_MATH_TEST_FAILURE;
+    }
+    else
+    {
+      status = ARM_MATH_SUCCESS;
+      printf("ARM_MATH_SUCCESS\r\n");
+    }
+
+    /* ----------------------------------------------------------------------
+    ** Loop here if the signal does not match the reference output.
+    ** ------------------------------------------------------------------- */
+
+    if ( status != ARM_MATH_SUCCESS)
+    {
+      while (1);
+    }
   /* USER CODE END 2 */
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+
+  sem_id = osSemaphoreCreate(osSemaphore(sampr), 1);
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of TaskBLE */
+  osThreadDef(TaskBLE, StartTaskBLE, osPriorityHigh, 0, 512);
+  TaskBLEHandle = osThreadCreate(osThread(TaskBLE), NULL);
+
+  /* definition and creation of TaskACC */
+  osThreadDef(TaskACC, StartTaskACC, osPriorityNormal, 0, 4096);
+  TaskACCHandle = osThreadCreate(osThread(TaskACC), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
-//	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
     /* USER CODE END WHILE */
-	MX_BlueNRG_MS_Process();
+
     /* USER CODE BEGIN 3 */
 
   }
@@ -551,10 +662,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -565,6 +676,76 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartTaskBLE */
+/**
+  * @brief  Function implementing the TaskBLE thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartTaskBLE */
+void StartTaskBLE(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+//	printf("a");
+  /* Infinite loop */
+  for(;;)
+  {
+//	  printf("hi\r\n");
+	  MX_BlueNRG_MS_Process();
+	  if (connected&sample_period>0)
+	  	  {
+	  //	  	  printf("hi\r\n");
+	  		  int16_t pDataAcc[3] = {0,0,0};
+	  		  BSP_ACCELERO_AccGetXYZ(pDataAcc);
+	  		  x_axes.AXIS_X = pDataAcc[0];
+	  	      x_axes.AXIS_Y = pDataAcc[1];
+	  		  x_axes.AXIS_Z = pDataAcc[2];
+	  		  Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+	  		  osDelay(sample_period);
+	  	  }
+	  else osDelay(100);
+
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartTaskACC */
+/**
+* @brief Function implementing the TaskACC thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskACC */
+void StartTaskACC(void const * argument)
+{
+  /* USER CODE BEGIN StartTaskACC */
+//  BSP_ACCELERO_Init();
+  /* Infinite loop */
+  for(;;)
+  {
+//	  printf("frrfrf\r\n");
+//	BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+//	printf("%d, %d, %d\r\n", pDataXYZ[0],pDataXYZ[1],pDataXYZ[2]);
+//	osSemaphoreWait(sem_id, osWaitForever);
+//	MX_BlueNRG_MS_Process();
+//    osDelay(1);
+  if (connected)
+	  {
+//	  	  printf("hi\r\n");
+		  int16_t pDataAcc[3] = {0,0,0};
+		  BSP_ACCELERO_AccGetXYZ(pDataAcc);
+		  x_axes.AXIS_X = pDataAcc[0];
+	      x_axes.AXIS_Y = pDataAcc[1];
+		  x_axes.AXIS_Z = pDataAcc[2];
+		  Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+		  osDelay(sample_period+1000);
+	  }
+//
+  else osDelay(1);
+  }
+  /* USER CODE END StartTaskACC */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
