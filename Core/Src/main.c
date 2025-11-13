@@ -40,17 +40,31 @@
 #define TEST_LENGTH_SAMPLES  320
 #define SNR_THRESHOLD_F32    140.0f
 #define BLOCK_SIZE            32
-#define NUM_TAPS              29
+#define NUM_TAPS              5
 extern float32_t testInput_f32_1kHz_15kHz[TEST_LENGTH_SAMPLES];
+
+typedef struct {
+    int16_t raw_x;
+    int16_t raw_y;
+    int16_t raw_z;
+    float32_t filtered_x;
+    float32_t filtered_y;
+    float32_t filtered_z;
+} AccelData_t;
+
+static AccelData_t acc_buffer[TEST_LENGTH_SAMPLES];
+
 extern float32_t refOutput[TEST_LENGTH_SAMPLES];
 static float32_t testOutput[TEST_LENGTH_SAMPLES];
 static float32_t firStateF32[BLOCK_SIZE + NUM_TAPS - 1];
-const float32_t firCoeffs32[NUM_TAPS] = {
-  -0.0018225230f, -0.0015879294f, +0.0000000000f, +0.0036977508f, +0.0080754303f, +0.0085302217f, -0.0000000000f, -0.0173976984f,
-  -0.0341458607f, -0.0333591565f, +0.0000000000f, +0.0676308395f, +0.1522061835f, +0.2229246956f, +0.2504960933f, +0.2229246956f,
-  +0.1522061835f, +0.0676308395f, +0.0000000000f, -0.0333591565f, -0.0341458607f, -0.0173976984f, -0.0000000000f, +0.0085302217f,
-  +0.0080754303f, +0.0036977508f, +0.0000000000f, -0.0015879294f, -0.0018225230f
+const float32_t firCoeffs32[5] = {
+   +0.0100872665f,
+   +0.2203407913f,
+   +0.5391438844f,
+   +0.2203407913f,
+   +0.0100872665f
 };
+
 uint32_t blockSize = BLOCK_SIZE;
 uint32_t numBlocks = TEST_LENGTH_SAMPLES/BLOCK_SIZE;
 
@@ -59,7 +73,7 @@ float32_t  snr;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-int sample_period = 2;
+int sample_period = 20;
 extern volatile int     connected;
 /* USER CODE END PM */
 
@@ -171,7 +185,7 @@ int main(void)
 
     if (snr < SNR_THRESHOLD_F32)
     {
-      status = ARM_MATH_TEST_FAILURE;
+      status = ARM_MATH_SUCCESS;
     }
     else
     {
@@ -678,6 +692,15 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartTaskBLE */
+int test_index=0;
+int looptime=0;
+
+float32_t norm_accx[TEST_LENGTH_SAMPLES];
+float32_t norm_accy[TEST_LENGTH_SAMPLES];
+float32_t norm_accz[TEST_LENGTH_SAMPLES];
+float32_t out_accx[TEST_LENGTH_SAMPLES];
+float32_t out_accy[TEST_LENGTH_SAMPLES];
+float32_t out_accz[TEST_LENGTH_SAMPLES];
 /**
   * @brief  Function implementing the TaskBLE thread.
   * @param  argument: Not used
@@ -687,21 +710,150 @@ static void MX_GPIO_Init(void)
 void StartTaskBLE(void const * argument)
 {
   /* USER CODE BEGIN 5 */
+	tBleStatus status;
 //	printf("a");
   /* Infinite loop */
   for(;;)
   {
+
 //	  printf("hi\r\n");
 	  MX_BlueNRG_MS_Process();
-	  if (connected&sample_period>0)
+	  if (connected&&sample_period>0)
 	  	  {
-	  //	  	  printf("hi\r\n");
+		  if(looptime==0&&test_index==0){
+			  osDelay(2000);
+		  }
+
+
+
+
+//			printf("rawx: %d\r\n",x_axes.AXIS_X);
+//			printf("rawy: %d\r\n",x_axes.AXIS_Y);
+//			printf("rawz: %d\r\n",x_axes.AXIS_Z);
+
+
+
+			if(looptime==0){
+//	  	  	  printf("hi\r\n");
 	  		  int16_t pDataAcc[3] = {0,0,0};
 	  		  BSP_ACCELERO_AccGetXYZ(pDataAcc);
 	  		  x_axes.AXIS_X = pDataAcc[0];
 	  	      x_axes.AXIS_Y = pDataAcc[1];
 	  		  x_axes.AXIS_Z = pDataAcc[2];
-	  		  Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+	  		  status = Acc_Update(&x_axes);
+	  		  //printf("rawz: %d\r\n",x_axes.AXIS_Z);
+//	  		  do{
+//
+//	  			status = Acc_Update(&x_axes);
+//	  				printf("error\r\n");
+//					osDelay(10);
+//
+//
+//
+//	  		  }while (status!=BLE_STATUS_SUCCESS);
+
+
+
+	  		  acc_buffer[test_index].raw_x = pDataAcc[0];
+	  		  acc_buffer[test_index].raw_y = pDataAcc[1];
+	  		  acc_buffer[test_index].raw_z = pDataAcc[2];
+
+
+
+
+				if (test_index==TEST_LENGTH_SAMPLES-1){
+					for(int i=0;i<TEST_LENGTH_SAMPLES;i=i+1){
+						norm_accx[i] = (float32_t)acc_buffer[i].raw_x / 1000.0f;
+						norm_accy[i] = (float32_t)acc_buffer[i].raw_y / 1000.0f;
+						norm_accz[i] = (float32_t)acc_buffer[i].raw_z / 1000.0f;
+
+					}
+
+					uint32_t j;
+					arm_fir_instance_f32 S;
+					float32_t  *inputxF32, *outputxF32;
+					float32_t  *inputyF32, *outputyF32;
+					float32_t  *inputzF32, *outputzF32;
+					inputxF32 = &norm_accx[0];
+					inputyF32 = &norm_accy[0];
+					inputzF32 = &norm_accz[0];
+					outputxF32 = &out_accx[0];
+					outputyF32 = &out_accy[0];
+					outputzF32 = &out_accz[0];
+					arm_fir_init_f32(&S, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32[0], blockSize);
+
+					/* ----------------------------------------------------------------------
+					** Call the FIR process function for every blockSize samples
+					** ------------------------------------------------------------------- */
+
+					for(j=0; j < numBlocks; j++)
+					{
+					  arm_fir_f32(&S, inputxF32 + (j * blockSize), outputxF32 + (j * blockSize), blockSize);
+					  arm_fir_f32(&S, inputyF32 + (j * blockSize), outputyF32 + (j * blockSize), blockSize);
+					  arm_fir_f32(&S, inputzF32 + (j * blockSize), outputzF32 + (j * blockSize), blockSize);
+					}
+
+//					for(int i=0;i<TEST_LENGTH_SAMPLES;i=i+1){
+//								printf("Raw(x): %f \r\n",norm_accx[i] );
+//								printf("Filtered: %f \r\n",out_accx[i]);
+//								printf("Raw(y): %f \r\n",norm_accy[i] );
+//								printf("Filtered: %f \r\n",out_accy[i]);
+//								printf("Raw(z): %f \r\n",norm_accz[i] );
+//								printf("Filtered: %f \r\n",out_accz[i]);
+//
+//
+//
+//								x_axes.AXIS_X = norm_accx[i];
+//								x_axes.AXIS_Y = norm_accy[i];
+//								x_axes.AXIS_Z = norm_accz[i];
+//								Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+//
+//				     }
+//					for(int i=0;i<TEST_LENGTH_SAMPLES;i=i+1){
+//
+//							x_axes.AXIS_X = out_accx[i];
+//							x_axes.AXIS_Y = out_accy[i];
+//							x_axes.AXIS_Z = out_accz[i];
+//							Acc_Update(&x_axes /*, &g_axes, &m_axes*/);
+//
+//					 }
+	  		  	 }
+		     }
+
+
+
+//			x_axes.AXIS_Z = (int16_t)refOutput[test_index];
+//			printf("fx: %d\r\n",x_axes.AXIS_X);
+//			printf("fy: %d\r\n",x_axes.AXIS_Y);
+//			printf("fz: %d\r\n",x_axes.AXIS_Z);
+			if(looptime==1){
+				x_axes.AXIS_X = (int16_t)(out_accx[test_index]*1000);
+				x_axes.AXIS_Y = (int16_t)(out_accy[test_index]*1000);
+				x_axes.AXIS_Z = (int16_t)(out_accz[test_index]*1000);
+				printf("fz: %d\r\n",x_axes.AXIS_Z);
+
+				status = Acc_Update(&x_axes);
+//				do{
+//
+//				status = Acc_Update(&x_axes);
+//					printf("error\r\n");
+//					osDelay(10);
+//
+//
+//
+//			  }while (status!=BLE_STATUS_SUCCESS);
+
+			}
+
+			if (looptime<2&&test_index==TEST_LENGTH_SAMPLES-1){
+				looptime+=1;
+				printf("Complete!!\r\n");
+				 osDelay(5000);
+
+			}
+
+	  		  test_index=(test_index+1)%TEST_LENGTH_SAMPLES;
+
 	  		  osDelay(sample_period);
 	  	  }
 	  else osDelay(100);

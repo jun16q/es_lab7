@@ -1,4 +1,0 @@
-../BlueNRG_MS/App/sensor.c:70:6:Set_DeviceConnectable	80	static
-../BlueNRG_MS/App/sensor.c:120:6:user_notify	56	static
-../BlueNRG_MS/App/sensor.c:208:6:GAP_DisconnectionComplete_CB	8	static
-../BlueNRG_MS/App/sensor.c:223:6:GAP_ConnectionComplete_CB	24	static
