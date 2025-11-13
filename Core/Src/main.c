@@ -749,10 +749,10 @@ void StartTaskBLE(void const * argument)
 	  		  x_axes.AXIS_X = pDataAcc[0];
 	  	      x_axes.AXIS_Y = pDataAcc[1];
 	  		  x_axes.AXIS_Z = pDataAcc[2];
-	  		  status = Acc_Update(&x_axes);
+	  		  Acc_Update(&x_axes);
 	  		  //printf("rawz: %d\r\n",x_axes.AXIS_Z);
 //	  		  do{
-//
+//	  			MX_BlueNRG_MS_Process();
 //	  			status = Acc_Update(&x_axes);
 //	  				printf("error\r\n");
 //					osDelay(10);
@@ -845,8 +845,9 @@ void StartTaskBLE(void const * argument)
 				x_axes.AXIS_Z = (int16_t)(out_accz[test_index]*1000);
 				printf("fz: %d\r\n",x_axes.AXIS_Z);
 
-				status = Acc_Update(&x_axes);
+				Acc_Update(&x_axes);
 //				do{
+//					MX_BlueNRG_MS_Process();
 //
 //				status = Acc_Update(&x_axes);
 //					printf("error\r\n");

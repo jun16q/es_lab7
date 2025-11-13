@@ -7,5 +7,5 @@
 ../Core/Src/main.c:482:13:MX_USB_OTG_FS_PCD_Init	2
 ../Core/Src/main.c:517:13:MX_GPIO_Init	1
 ../Core/Src/main.c:719:6:StartTaskBLE	12
-../Core/Src/main.c:885:6:StartTaskACC	2
-../Core/Src/main.c:919:6:Error_Handler	1
+../Core/Src/main.c:886:6:StartTaskACC	2
+../Core/Src/main.c:920:6:Error_Handler	1
