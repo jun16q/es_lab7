@@ -40,7 +40,7 @@
 #define TEST_LENGTH_SAMPLES  320
 #define SNR_THRESHOLD_F32    140.0f
 #define BLOCK_SIZE            32
-#define NUM_TAPS              5
+#define NUM_TAPS              11
 extern float32_t testInput_f32_1kHz_15kHz[TEST_LENGTH_SAMPLES];
 
 typedef struct {
@@ -57,12 +57,21 @@ static AccelData_t acc_buffer[TEST_LENGTH_SAMPLES];
 extern float32_t refOutput[TEST_LENGTH_SAMPLES];
 static float32_t testOutput[TEST_LENGTH_SAMPLES];
 static float32_t firStateF32[BLOCK_SIZE + NUM_TAPS - 1];
-const float32_t firCoeffs32[5] = {
-   +0.0100872665f,
-   +0.2203407913f,
-   +0.5391438844f,
-   +0.2203407913f,
-   +0.0100872665f
+static float32_t firStateF32x[BLOCK_SIZE + NUM_TAPS - 1];
+static float32_t firStateF32y[BLOCK_SIZE + NUM_TAPS - 1];
+static float32_t firStateF32z[BLOCK_SIZE + NUM_TAPS - 1];
+const float32_t firCoeffs32[11] = {
+   -0.0000000000f,
+   -0.0126419757f,
+   -0.0246922577f,
+   +0.0635051299f,
+   +0.2747977512f,
+   +0.3980627047f,
+   +0.2747977512f,
+   +0.0635051299f,
+   -0.0246922577f,
+   -0.0126419757f,
+   -0.0000000000f
 };
 
 uint32_t blockSize = BLOCK_SIZE;
@@ -770,7 +779,9 @@ void StartTaskBLE(void const * argument)
 					}
 
 					uint32_t j;
-					arm_fir_instance_f32 S;
+					arm_fir_instance_f32 Sx;
+					arm_fir_instance_f32 Sy;
+					arm_fir_instance_f32 Sz;
 					float32_t  *inputxF32, *outputxF32;
 					float32_t  *inputyF32, *outputyF32;
 					float32_t  *inputzF32, *outputzF32;
@@ -780,7 +791,9 @@ void StartTaskBLE(void const * argument)
 					outputxF32 = &out_accx[0];
 					outputyF32 = &out_accy[0];
 					outputzF32 = &out_accz[0];
-					arm_fir_init_f32(&S, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32[0], blockSize);
+					arm_fir_init_f32(&Sx, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32x[0], blockSize);
+					arm_fir_init_f32(&Sy, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32y[0], blockSize);
+					arm_fir_init_f32(&Sz, NUM_TAPS, (float32_t *)&firCoeffs32[0], &firStateF32z[0], blockSize);
 
 					/* ----------------------------------------------------------------------
 					** Call the FIR process function for every blockSize samples
@@ -788,9 +801,9 @@ void StartTaskBLE(void const * argument)
 
 					for(j=0; j < numBlocks; j++)
 					{
-					  arm_fir_f32(&S, inputxF32 + (j * blockSize), outputxF32 + (j * blockSize), blockSize);
-					  arm_fir_f32(&S, inputyF32 + (j * blockSize), outputyF32 + (j * blockSize), blockSize);
-					  arm_fir_f32(&S, inputzF32 + (j * blockSize), outputzF32 + (j * blockSize), blockSize);
+					  arm_fir_f32(&Sx, inputxF32 + (j * blockSize), outputxF32 + (j * blockSize), blockSize);
+					  arm_fir_f32(&Sy, inputyF32 + (j * blockSize), outputyF32 + (j * blockSize), blockSize);
+					  arm_fir_f32(&Sz, inputzF32 + (j * blockSize), outputzF32 + (j * blockSize), blockSize);
 					}
 
 //					for(int i=0;i<TEST_LENGTH_SAMPLES;i=i+1){
